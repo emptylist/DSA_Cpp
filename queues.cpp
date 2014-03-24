@@ -17,12 +17,17 @@ public:
   QueueFullException(const string& err) : RuntimeException(err) {}
 };
 
+class QueueEmptyException : public RuntimeException {
+public:
+  QueueEmptyException(const string& err) : RuntimeException(err) {}
+};
+
 // Queue Template
 
 template <typename Object>
 class ArrayQueue {
 private:
-  enum {CAPACITY = 1000 };
+  enum { CAPACITY = 1000 };
   int capacity;
   Object* Q;
   int front;
@@ -32,29 +37,29 @@ public:
   ArrayQueue(int cap = CAPACITY) {
     capacity = cap;
     Q = new Object[capacity];
-    f = r = 0;
+    front = rear = 0;
   }
 
   ~ArrayQueue() {
     delete [] Q;
   }
 
-  ArrayQueue& operator=(const ArrayQueue qu); // assignment operator constructor
+  ArrayQueue& operator=(const ArrayQueue& qu); // assignment operator constructor
   ArrayQueue(const ArrayQueue& qu); //copy constructor
 
   // Data Structure Logic methods
   void enqueue(const Object& obj) throw(QueueFullException) {
     if (size() == capacity)
       throw QueueFullException("Queue overflow.");
-    Q[r] = obj;
-    r = r++ % capacity;
+    Q[rear] = obj;
+    rear = rear++ % capacity;
   }
 
   Object dequeue() throw(QueueEmptyException) {
     if (size() == 0)
       throw QueueEmptyException("Access to empty Queue.");
-    output_loc = f;
-    f = f++ % capacity;
+    int output_loc = front;
+    front = front++ % capacity;
     return Q[output_loc];
   }
 
@@ -63,9 +68,51 @@ public:
     return (capacity - front + rear) % capacity;
   }
 
-  bool isEmpty const {
+  bool isEmpty() const {
     return (front == rear);
   }
-  const Object& first() const throw(QueueEmptyException) {
+
+  const Object first() const throw(QueueEmptyException) {
+    return Q[front];
   }
 };
+
+template <typename Object>
+ArrayQueue<Object>::ArrayQueue(const ArrayQueue& qu)
+{
+  capacity = qu.capacity;
+  front = qu.front;
+  rear = qu.rear;
+  Q = new Object[capacity];
+  int i = front;
+  while(i != rear) {
+    Q[i] = qu.Q[i];
+    i = i++ % capacity;
+  }
+}
+
+template <typename Object>
+ArrayQueue<Object>& ArrayQueue<Object>::operator=(const ArrayQueue& qu)
+{
+  if (this != &qu) {
+    delete [] Q;
+    capacity = qu.capacity;
+    front = qu.front;
+    rear = qu.rear;
+    Q = new Object[capacity];
+    int i = front;
+    while(i != rear) {
+      Q[i] = qu.Q[i];
+      i = i++ % capacity;
+    }
+  }
+  return *this;
+}
+
+int main() {
+  ArrayQueue<int> q;
+  q.enqueue(10);
+  cout << q.first() << endl;
+  return 0;
+}
+
